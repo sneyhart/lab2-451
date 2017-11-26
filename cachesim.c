@@ -13,6 +13,7 @@ typedef struct{
     int address, history;
 } cblock;
 
+//prints the cache out
 void print_cache(cblock *cache, int blocks)
 {
     int i; 
@@ -23,6 +24,8 @@ void print_cache(cblock *cache, int blocks)
     printf("\n");
 }
 
+//replaces a block in the set using LRU replacement.
+//LRU is determined by the history counter in cblock.
 void lru_replace(cblock *cache, int caddress, int address, int assoc)
 {
     //printf(" rand %d ", r);
@@ -37,6 +40,7 @@ void lru_replace(cblock *cache, int caddress, int address, int assoc)
     cache[caddress + r].history = 0;
 }
 
+//replaces a block in the set using random replacement.
 void rand_replace(cblock *cache, int caddress, int address, int assoc)
 {
     int r = rand() % assoc;
@@ -45,6 +49,7 @@ void rand_replace(cblock *cache, int caddress, int address, int assoc)
     cache[caddress + r].history = 0;
 }
 
+//adds an address to the cache using a replacement policy if necessary
 void add_address(cblock *cache, int address, int blocks, int bsize, int assoc)
 {
 	int caddress, it, addhit=0;
@@ -52,8 +57,8 @@ void add_address(cblock *cache, int address, int blocks, int bsize, int assoc)
 	caddress = (address) % (blocks / assoc) * assoc;
 	for(it = caddress; it < caddress + assoc; it++)
 	{
-	    cache[it].history++;
-	    if(cache[it].address == 0 && !addhit){
+	    if (cache[it].history >= 0) cache[it].history++;
+	    if(cache[it].address == 0 && cache[it].history == -1 && !addhit){
 		cache[it].history = 0;
 		cache[it].address = (address);
 		addhit = 1;
@@ -95,15 +100,18 @@ int main(int argc, char **argv)
     srand(time(NULL));
     cblock cache[blocks];
     memset(&cache, 0, blocks*sizeof(cblock));
+    for (i = 0; i < blocks; i++) cache[i].history = -1;
     
-    //print_cache(cache, blocks);
+    //reads addresses from stdin
     while(scanf("%x", &address) == 1){
 	total++;
 	add_address(cache, address, blocks, bsize, assoc);
     }
+    
     //printf("\n");
     //print_cache(cache, blocks);
     //printf("\n");
+    
     printf("Total Reads: %d\n", total);
     printf("Total Hits: %d\n", total_hits);
     printf("Total Misses: %d\n", total - total_hits);
